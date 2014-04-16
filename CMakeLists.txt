@@ -85,21 +85,21 @@ add_library(gtest_170_lib ${GTEST_DIR}/src/gtest-all.cc)
 set_target_properties(gtest_170_lib  PROPERTIES COMPILE_DEFINITIONS "GTEST_HAS_RTTI=0")
 enable_testing(true)
 
+
+
 # obs see this: http://stackoverflow.com/questions/9589192/how-do-i-change-the-number-of-template-arguments-supported-by-msvcs-stdtupl
 # and this: http://stackoverflow.com/questions/2257464/google-test-and-visual-studio-2010-rc
-SET(tests_to_run TestOfSutterConcurrent TestOfConcurrent)
 include_directories(${DIR_UNIT_TEST})
-FOREACH(test ${tests_to_run} )
-  SET(all_tests  ${all_tests} ${DIR_UNIT_TEST}/${test}.cpp )
-  add_executable(${test} 3rdparty/test_main.cpp ${DIR_UNIT_TEST}/${test}.cpp)
+file(GLOB TEST_SRC_FILES ${DIR_UNIT_TEST}/*.h ${DIR_UNIT_TEST}/*.hpp ${DIR_UNIT_TEST}/*.cpp ${DIR_UNIT_TEST}/*.ipp)
+
+  add_executable(UnitTestRunner 3rdparty/test_main.cpp ${TEST_SRC_FILES} )
   set_target_properties(${test} PROPERTIES COMPILE_DEFINITIONS "GTEST_HAS_TR1_TUPLE=0")
   set_target_properties(${test} PROPERTIES COMPILE_DEFINITIONS "GTEST_HAS_RTTI=0")
 IF( NOT(MSVC))
   set_target_properties(${test} PROPERTIES COMPILE_FLAGS "-isystem -pthread ")
-ENDIF( NOT(MSVC)) 
- 
-target_link_libraries(${test} concurrentwrapper gtest_170_lib ${PLATFORM_LINK_LIBRIES})
-ENDFOREACH(test)
+ENDIF( NOT(MSVC))  
+target_link_libraries(UnitTestRunner concurrentwrapper gtest_170_lib ${PLATFORM_LINK_LIBRIES})
+
   
 
 

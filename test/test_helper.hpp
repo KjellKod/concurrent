@@ -8,27 +8,23 @@
 #pragma once
 
 
-#include <random>
-#include <iostream>
+
 #include <string>
 #include <cassert>
 #include <chrono>
 #include <memory>
+#include <atomic>
+#include <future>
+#include <thread>
+#include "concurrent.hpp"
 #include "moveoncopy.hpp"
 
 namespace test_helper {
    typedef std::chrono::steady_clock clock;
 
-   /** Random function from http://www2.research.att.com/~bs/C++0xFAQ.html#std-random */
-   int random_int(int low, int high) {
-      using namespace std;
-      static std::random_device rd; // Seed with a real random value, if available
-      static default_random_engine engine{rd()};
-      typedef uniform_int_distribution<int> Distribution;
-      static Distribution distribution{};
+   /** Random int function from http://www2.research.att.com/~bs/C++0xFAQ.html#std-random */
+   int random_int(int low, int high);
 
-      return distribution(engine, Distribution::param_type{low, high});
-   }
 
    struct DummyObject {
       void doNothing() {}
@@ -145,26 +141,23 @@ namespace test_helper {
       }
    };
 
+   std::future<void> DoAFlip(concurrent<FlipOnce>& flipper);
+   std::future<void> DoAFlipAtomic(concurrent<FlipOnce>& flipper);
+   
+
    struct Animal {
       virtual std::string sound() = 0;
    };
 
    struct Dog : public Animal {
       std::string sound() override {
-         return
-         {
-            "Wof Wof"
-         };
+         return  {"Wof Wof"};
       }
    };
 
    struct Cat : public Animal {
-
       std::string sound() override {
-         return
-         {
-            "Miauu Miauu"
-         };
+         return {"Miauu Miauu"};
       }
    };
 

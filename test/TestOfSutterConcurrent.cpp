@@ -7,34 +7,30 @@
 #include <future>
 
 
-#include "sutter_concurrent.hpp"
+#include "concurrent.hpp"
 #include "test_helper.hpp"
-
+#include "std2_make_unique.hpp"
 
 using namespace test_helper;
-using namespace sutter;
 
-TEST(TestOfConcurrent, CompilerCheckForEmptyStruct) {
+TEST(TestOfSutterConcurrent, CompilerCheckForEmptyStruct) {
    concurrent<DummyObject> doNothing1{};
    concurrent<DummyObject> doNothing2;
    concurrent<DummyObject> doNothing3 = {};
 }
 
-TEST(TestOfConcurrent, CompilerCheckUniquePtrTest) {
-   typedef std::unique_ptr<Animal> RaiiAnimal;
-   concurrent<RaiiAnimal> animal1{new Dog};
-   concurrent<RaiiAnimal> animal2{new Cat};
+TEST(TestOfSutterConcurrent, AbstractInterface__Works__Fine) {
+   concurrent<Animal> animal1{std::unique_ptr<Animal>(new Dog)};  // two example how this can be achieved
+   concurrent<Animal> animal2{std::unique_ptr<Animal>(new Cat)};
 
-   auto make_sound = [](RaiiAnimal & animal) {
-      return animal->sound();
-   };
-   EXPECT_EQ("Wof Wof", animal1(make_sound).get());
-   EXPECT_EQ("Miauu Miauu", animal2(make_sound).get());
+   auto make_sound = [](Animal& animal) { return animal.sound();  };
+   
+  EXPECT_EQ("Wof Wof", animal1(make_sound).get());
+  EXPECT_EQ("Miauu Miauu", animal2(make_sound).get());
+  
 }
 
-
-
-TEST(TestOfConcurrent, VerifyDestruction) {
+TEST(TestOfSutterConcurrent, VerifyDestruction) {
    std::atomic<bool> flag{true};
    {
       concurrent<TrueAtExit> notifyAtExit1{&flag};
@@ -50,7 +46,7 @@ TEST(TestOfConcurrent, VerifyDestruction) {
 
 
 
-TEST(TestOfConcurrent, VerifyFifoCalls) {
+TEST(TestOfSutterConcurrent, VerifyFifoCalls) {
 
    concurrent<std::string> asyncString = {"start"};
    auto received = asyncString([](std::string & s) {
@@ -75,7 +71,7 @@ TEST(TestOfConcurrent, VerifyFifoCalls) {
 
 
 
-TEST(TestOfConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
+TEST(TestOfSutterConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
    auto start = clock::now();
    {
       concurrent<DelayedCaller> snail;
@@ -91,11 +87,8 @@ TEST(TestOfConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
 
 
 
-std::future<void> DoAFlip(concurrent<FlipOnce>& flipper) {
-   return flipper([] (FlipOnce & obj) {
-      obj.doFlip(); });
-}
-TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minute) {
+
+TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minute) {
    std::cout << "60*10 thread runs. Please wait a minute" << std::endl;
    for (size_t howmanyflips = 0; howmanyflips < 60; ++howmanyflips) {
       std::cout << "." << std::flush;
@@ -125,11 +118,8 @@ TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minute) {
    std::cout << std::endl;
 }
 
-std::future<void> DoAFlipAtomic(concurrent<FlipOnce>& flipper) {
-   return flipper([] (FlipOnce & obj) {
-      obj.doFlipAtomic(); });
-}
-TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicInside_Wait1Minute) {
+
+TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicInside_Wait1Minute) {
    std::cout << "60*10 thread runs. Please wait a minute" << std::endl;
    for (size_t howmanyflips = 0; howmanyflips < 60; ++howmanyflips) {
       std::cout << "." << std::flush;

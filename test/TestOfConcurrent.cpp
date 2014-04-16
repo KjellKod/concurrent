@@ -162,11 +162,6 @@ TEST(TestOfConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
 
 
 
-std::future<void> DoAFlip(concurrent<FlipOnce>& flipper) {
-   return flipper.call(&FlipOnce::doFlip);   
-}
-
-
 TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minute) {
    std::cout << "60*10 thread runs. Please wait a minute" << std::endl;
    for (size_t howmanyflips = 0; howmanyflips < 60; ++howmanyflips) {
@@ -199,9 +194,6 @@ TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minute) {
 
 
 
-std::future<void> DoAFlipAtomic(concurrent<FlipOnce>& flipper) {
-   return flipper.call(&FlipOnce::doFlipAtomic);
-}
 TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicInside_Wait1Minute) {
    std::cout << "60*10 thread runs. Please wait a minute" << std::endl;
    for (size_t howmanyflips = 0; howmanyflips < 60; ++howmanyflips) {
