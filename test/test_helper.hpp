@@ -16,6 +16,8 @@
 #include <atomic>
 #include <future>
 #include <thread>
+#include <iostream>
+#include <stdexcept>
 #include "concurrent.hpp"
 #include "moveoncopy.hpp"
 
@@ -30,17 +32,17 @@ namespace test_helper {
       void doNothing() {}
    };
 
-   struct DummyStringObject {
+   struct Greeting {
       std::string sayHello() {
          return {"Hello World"};
       }
    };
 
 
-   typedef std::unique_ptr<DummyStringObject> UniqueDummyType;
+   typedef std::unique_ptr<Greeting> UniqueGreeting;
 
-   struct DummyObjectWithUniqueType {
-      std::string talkBack(MoveOnCopy<UniqueDummyType> obj) {
+   struct GreetingWithUnique {
+      std::string talkBack(MoveOnCopy<UniqueGreeting> obj) {
          return obj.get()->sayHello();
       }
    };
@@ -143,6 +145,8 @@ namespace test_helper {
 
    std::future<void> DoAFlip(concurrent<FlipOnce>& flipper);
    std::future<void> DoAFlipAtomic(concurrent<FlipOnce>& flipper);
+   std::future<void> DoALambdaFlip(concurrent<FlipOnce>& flipper);
+   std::future<void> DoALambdaFlipAtomic(concurrent<FlipOnce>& flipper);
    
 
    struct Animal {
@@ -159,6 +163,16 @@ namespace test_helper {
       std::string sound() override {
          return {"Miauu Miauu"};
       }
+   };
+   
+   
+   
+   struct ThrowUp {
+      explicit ThrowUp(const std::string& puke) {
+         throw std::runtime_error(puke);
+      }
+      
+      void neverCalled() { std::cout << "I'm never called" << std::endl; }
    };
 
 } // namespace test_helper

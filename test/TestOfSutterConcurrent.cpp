@@ -19,14 +19,61 @@ TEST(TestOfSutterConcurrent, CompilerCheckForEmptyStruct) {
    concurrent<DummyObject> doNothing3 = {};
 }
 
+
+TEST(TestOfSutterConcurrent, ThrowingConstructor) {
+   EXPECT_THROW(concurrent<ThrowUp> cs{" bad soup "}, std::runtime_error);
+}
+   
+
+TEST(TestOfSutterConcurrent, Empty) {
+   concurrent<std::string> cs{std::unique_ptr<std::string>{nullptr}};
+   EXPECT_TRUE(cs.empty());
+     
+   // Calling an empty concurrent object will throw
+   auto result = cs.lambda( [](std::string& s) { 
+      return s.substr(0, std::string::npos); });
+   EXPECT_ANY_THROW(result.get());  
+}
+
+
+TEST(TestOfSutterConcurrent, Clear_plain) {
+   concurrent<std::string> cs{"Hello World"};
+   EXPECT_EQ("Hello World", cs.lambda([](std::string & str) {
+                                         return str.substr(0, std::string::npos); 
+                                      }).get());
+   EXPECT_FALSE(cs.empty());
+}
+
+TEST(TestOfSutterConcurrent, Hello_World) {
+   concurrent<std::string> cs{std2::make_unique<std::string>("Hello World")};
+   EXPECT_FALSE(cs.empty());
+   EXPECT_EQ("Hello World", cs.lambda([](std::string & str) {
+                                         return str.substr(0, std::string::npos); 
+                                      }).get());
+}
+
+/** Oops. The straight forward approach can also be backwards */
+TEST(TestOfConcurrent, No_Issue_with_Overloads) {
+   concurrent<std::string> hello;
+
+   auto response = hello.lambda( [](std::string& s) {
+      s.append("Hello World");
+      return s; });
+      
+   EXPECT_EQ("Hello World", response.get());   
+}
+
+
+
+
 TEST(TestOfSutterConcurrent, AbstractInterface__Works__Fine) {
    concurrent<Animal> animal1{std::unique_ptr<Animal>(new Dog)};  // two example how this can be achieved
    concurrent<Animal> animal2{std::unique_ptr<Animal>(new Cat)};
 
    auto make_sound = [](Animal& animal) { return animal.sound();  };
    
-  EXPECT_EQ("Wof Wof", animal1(make_sound).get());
-  EXPECT_EQ("Miauu Miauu", animal2(make_sound).get());
+  EXPECT_EQ("Wof Wof", animal1.lambda(make_sound).get());
+  EXPECT_EQ("Miauu Miauu", animal2.lambda(make_sound).get());
   
 }
 
@@ -46,13 +93,17 @@ TEST(TestOfSutterConcurrent, VerifyDestruction) {
 
 
 
+
+
+
+
 TEST(TestOfSutterConcurrent, VerifyFifoCalls) {
 
    concurrent<std::string> asyncString = {"start"};
-   auto received = asyncString([](std::string & s) {
+   auto received = asyncString.lambda([](std::string & s) {
       s.append(" received message"); return std::string{s}; });
 
-   auto clear = asyncString([](std::string & s) {
+   auto clear = asyncString.lambda([](std::string & s) {
       s.clear(); return s; });
 
    EXPECT_EQ("start received message", received.get());
@@ -61,10 +112,10 @@ TEST(TestOfSutterConcurrent, VerifyFifoCalls) {
    std::string toCompare;
    for (size_t index = 0; index < 100000; ++index) {
       toCompare.append(std::to_string(index)).append(" ");
-      asyncString([ = ](std::string & s){s.append(std::to_string(index)).append(" ");});
+      asyncString.lambda([ = ](std::string & s){s.append(std::to_string(index)).append(" ");});
    }
 
-   auto appended = asyncString([](const std::string & s) {
+   auto appended = asyncString.lambda([](const std::string & s) {
       return s; });
    EXPECT_EQ(appended.get(), toCompare);
 }
@@ -76,13 +127,20 @@ TEST(TestOfSutterConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
    {
       concurrent<DelayedCaller> snail;
       for (size_t call = 0; call < 10; ++call) {
-         snail([](DelayedCaller & slowRunner) {
+         snail.lambda([](DelayedCaller & slowRunner) {
             slowRunner.DoDelayedCall(); });
       }
       EXPECT_LT(std::chrono::duration_cast<std::chrono::seconds>(clock::now() - start).count(), 1);
    } // at destruction all 1 second calls will be executed before we quit
 
    EXPECT_TRUE(std::chrono::duration_cast<std::chrono::seconds>(clock::now() - start).count() >= 10); // 
+}
+
+TEST(TestOfSutterConcurrent, unique_ptr_wrapps_concurrent) {
+   std::unique_ptr<concurrent<Greeting>> gossip;
+   gossip.reset(new concurrent<Greeting>());
+   auto tjena = gossip->call(&Greeting::sayHello);
+   EXPECT_EQ(tjena.get(), "Hello World");
 }
 
 
@@ -97,16 +155,16 @@ TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minu
       {
          concurrent<FlipOnce> flipOnceObject{&count_of_flip, &total_thread_access};
          ASSERT_EQ(0, count_of_flip);
-         auto try0 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try1 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try2 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try3 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try4 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try5 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try6 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try7 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try8 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try9 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
+         auto try0 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
+         auto try1 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
+         auto try2 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
+         auto try3 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
+         auto try4 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
+         auto try5 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
+         auto try6 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
+         auto try7 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
+         auto try8 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
+         auto try9 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
 
          // scope exit. ALL jobs will be executed before this finished. 
          //This means that all 10 jobs in the loop must be done
@@ -129,16 +187,16 @@ TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicIns
       {
          concurrent<FlipOnce> flipOnceObject{&count_of_flip, &total_thread_access};
          ASSERT_EQ(0, count_of_flip);
-         auto try0 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try1 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try2 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try3 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try4 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try5 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try6 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try7 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try8 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try9 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+         auto try0 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
+         auto try1 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
+         auto try2 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
+         auto try3 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
+         auto try4 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
+         auto try5 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
+         auto try6 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
+         auto try7 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
+         auto try8 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
+         auto try9 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
 
          // scope exit. ALL jobs will be executed before this finished. 
          //This means that all 10 jobs in the loop must be done

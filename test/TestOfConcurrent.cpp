@@ -31,15 +31,15 @@ TEST(TestOfConcurrent, CompilerCheckForVoidCall) {
 }
 
 TEST(TestOfConcurrent, CompilerCheckForStringCall) {
-   concurrent<DummyStringObject> hello;
-   EXPECT_EQ("Hello World", hello.call(&DummyStringObject::sayHello).get());
+   concurrent<Greeting> hello;
+   EXPECT_EQ("Hello World", hello.call(&Greeting::sayHello).get());
 }
 
 // Example on how to receive unique_ptr' or other un-copyable objects
 TEST(TestOfConcurrent, CompilerCheckForStringCallWithObjectArg) {
-    concurrent<DummyObjectWithUniqueType> hello;
-    UniqueDummyType  arg{new DummyStringObject};   
-    auto futureHello = hello.call(&DummyObjectWithUniqueType::talkBack, MoveOnCopy<UniqueDummyType>(std::move(arg)));
+    concurrent<GreetingWithUnique> hello;
+    UniqueGreeting  arg{new Greeting};   
+    auto futureHello = hello.call(&GreetingWithUnique::talkBack, MoveOnCopy<UniqueGreeting>(std::move(arg)));
     EXPECT_EQ("Hello World", futureHello.get());
 }
 
@@ -68,39 +68,23 @@ TEST(TestOfConcurrent, CompilerCheckForConcurrentUniqueArg) {
 TEST(TestOfConcurrent, Empty) {
    concurrent<std::string> cs{std::unique_ptr<std::string>{nullptr}};
    EXPECT_TRUE(cs.empty());
-   
-  cs.clear();
-  EXPECT_TRUE(cs.empty());
-  
+    
    // Calling an empty concurrent object will throw
    EXPECT_ANY_THROW(cs.call(&std::string::substr, 0, std::string::npos).get());
 }
 
 
-TEST(TestOfConcurrent, Clear_plain) {
+TEST(TestOfConcurrent, Is_Not_Empty) {
    concurrent<std::string> cs{"Hello World"};
    EXPECT_EQ("Hello World", cs.call(&std::string::substr, 0,std::string::npos).get());
-   EXPECT_FALSE(cs.empty());
-   
-  cs.clear();
-  EXPECT_TRUE(cs.empty());
+   EXPECT_FALSE(cs.empty());   
 }
 
-TEST(TestOfConcurrent, Clear_unique) {
+TEST(TestOfConcurrent, Hello_World) {
    concurrent<std::string> cs{std2::make_unique<std::string>("Hello World")};
    EXPECT_FALSE(cs.empty());
    EXPECT_EQ("Hello World", cs.call(&std::string::substr, 0, std::string::npos).get());
-
-   cs.clear();
-   EXPECT_TRUE(cs.empty());
-   
-   // Calling a cleared concurrent object will throw
-   EXPECT_ANY_THROW(cs.call(&std::string::substr, 0, std::string::npos).get());
 }
-
-
-
-
 
 
 /** Oops. The straight forward approach can also be backwards */

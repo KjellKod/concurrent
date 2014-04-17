@@ -1,36 +1,38 @@
 // PUBLIC DOMAIN LICENSE: https://github.com/KjellKod/Concurrent/blob/master/LICENSE
 // 
-// Part II --- Concurrent Wrapper
+// Concurrent Wrapper
 // ===============================
-// Wrap "any" object to get concurrent access with asynchronous execution in FIFO  orer
-// Improvement from:      http://kjellkod.wordpress.com/2014/04/07/concurrency-concurrent-wrapper/
-//
-// Two possible approaches that can be used. 
-// =========================================
-// 1) KjellKod's g3log approach to wrap any object
-// struct Hello { void world() { cout << "Hello World" << endl; } };
-//
-//  concurrent<Hello> hello;
-// concurrent.call(&world);
-//
-//
-// 2) Herb Sutter's approach http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism
-//    wrap any object and call it though a lambda. Multiple things can be executed in the same asynchronous operation.
-// concurrent<Hello> hello;
-// concurrent( [](Hello& msg){ msg.world(); });
-//
-//
-//
-// Part I 
-// ======================
-// Published at:https://github.com/KjellKod/Concurrent and 
-//      http://kjellkod.wordpress.com/2014/04/07/concurrency-concurrent-wrapper/
-//
-// What this "concurrent" is
+// Wrap "any" object to get concurrent access with asynchronous execution in FIFO  order.
+// Published originally at : 
+// http://kjellkod.wordpress.com/2014/04/07/concurrency-concurrent-wrapper/
+// https://github.com/KjellKod/concurrent 
+// 
+// 
 // 1) The "concurrent" can wrap ANY object
 // 2) All access to the concurrent is done though a lambda or using an easy pointer-to-member function call. 
-// 3) All access call to the concurrent is done asynchronously but they are executed in FIFO order
+// 3) All access call to the concurrent is done asynchronously and they are executed in FIFO order
 // 4) At scope exit all queued jobs has to finish before the concurrent goes out of scope
+// 5) A function call to a concurrent wrapped object can either be bundled for several actions within one asynchronous call
+//   or it can be a single action within that asynchronous call 
+//
+// =========================================
+// 1) Single Action per Single Asynchronous call. KjellKod's g3log approach. 
+// example usage:
+// struct Hello { void world() { cout << "Hello World" << endl; } };
+//  concurrent<Hello> ch;
+//  ch.call(&world);
+//
+//
+// 2) Bundled actions per Single Asynchronous call. Herb Sutter's approach 
+//                    Ref: http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism
+// The calls are made through a lambda. Multiple actions can be bundled. It also helps when there are overloads of the same function
+// concurrent<Hello> ch;
+// ch.lambda( [](Hello& msg){ 
+//                msg.world(); 
+//                msg.world();
+//            });
+//
+//
 #pragma once
 
 #include <thread>
@@ -61,6 +63,9 @@ namespace concurrent_helper {
 } // namespace concurrent_helper
 
 
+
+
+
 /**
  * Basically a light weight active object. www.kjellkod.cc/active-object-with-cpp0x#TOC-Active-Object-the-C-11-way
  * all input happens in the background. At shutdown it exits only after all 
@@ -69,7 +74,7 @@ namespace concurrent_helper {
 template <class T> class concurrent {
    mutable std::unique_ptr<T> _worker;
    mutable shared_queue<concurrent_helper::Callback> _q;
-   bool _done; // not atomic since only the bg thread is touching it
+   bool _done; // not atomic since only the thread is touching it
    std::thread _thd;
 
    void run() const {
@@ -82,7 +87,7 @@ template <class T> class concurrent {
 
 public:
    /**  Constructs an unique_ptr<T>  that is the background object 
-    * @param args to contruct the unique_ptr<T> in-place
+    * @param args to construct the unique_ptr<T> in-place
     */
    template<typename ... Args>
    concurrent(Args&&... args)
@@ -97,50 +102,52 @@ public:
    , _done(false)
    , _thd([ = ]{concurrent_helper::Callback call;
       while (_worker && !_done) { 
-         _q.wait_and_pop(call);  call(); }}) 
+         _q.wait_and_pop(call);  
+         call(); 
+      }}) 
     {     
-    }
-
-   virtual ~concurrent() {
-      clear();
    }
 
-   
+         
    /**
-    * Convenience function to stop the object before it is stopped in the destructor.
-    */
-   void clear() {
+    * Clean shutdown. All pending messages are executed before the shutdown message is received
+    */      
+   virtual ~concurrent() {
       _q.push([ = ]{_done = true;});
       if (_thd.joinable()) {
          _thd.join();
       }
       _worker.reset(nullptr);
    }
-   
+  
    /**
     * @return whether the background object is still active. If the thread is stopped then 
     * the background object will also be removed. 
     */
-   bool empty() const { return !_worker; }
+   bool empty() const { 
+      return !_worker; 
+   }
    
    /**
     *  Following Herb Sutter's approach for a concurrent wrapper
     * using std::promise and setting the value using a lambda approach
+    * 
     * Example:   struct Hello { void foo(){...}
-    *            concurrent<Hello>  h;
-    *            h.( [](Hello& object){ object.foo(); };
+    *               concurrent<Hello>  h;
+    *               h.lambda( [](Hello& object){ object.foo(); };
+    * 
     * @param func lambda that has to take the wrapped object by reference as argument
-    *        the lambda will be called by the wrapper for the given lambda
+    *             the lambda will be called by the wrapper for the given lambda
     * @return std::future return of the lambda
     */
    template<typename F> // typename std::result_of< decltype(func)(T*, Args...)>::type
-   auto operator()(F func) const -> std::future<typename std::result_of<decltype(func)(T&)>::type> {
+   auto lambda(F func) const -> std::future<typename std::result_of<decltype(func)(T&)>::type> {
       typedef typename std::result_of < decltype(func)(T&)>::type result_type;
       auto p = std::make_shared < std::promise<result_type>>();
       auto future_result = p->get_future();
 
       if (empty()) {
-         p->set_exception(std::make_exception_ptr(std::runtime_error("concurrent was cleared of background thread object")));
+         p->set_exception(std::make_exception_ptr(std::runtime_error("nullptr instantiated worker")));
       }
       else {
          _q.push([ = ]{
@@ -167,10 +174,6 @@ public:
     * @param args parameter pack to executed by the function pointer. 
     * @return std::future return of the background executed function
     */                                                          
-   //typename decltype( std::declval<T>().func(Args...) )  
-   // std::result_of<decltype(&func)(Args..)>::type  
-   // typedef typename std::result_of< decltype( & T::toCPD ) ( T * ) >::type
-   // typedef typename std::result_of< decltype(func)(T*)>::type
    template<typename AsyncCall, typename... Args>
    auto call(AsyncCall func, Args&&... args) const ->   std::future<typename std::result_of< decltype(func)(T*, Args...)>::type>  {
       typedef typename std::result_of <decltype(func)(T*, Args...)>::type result_type;      
@@ -182,10 +185,10 @@ public:
          p->set_exception(std::make_exception_ptr(std::runtime_error("concurrent was cleared of background thread object")));
          return future_result;
       }
-    
 
       // weak compiler support for expanding parameter pack in a lambda. std::function is the work-around
-      //auto bgCall = [&, args...]{ return (_worker.*func)(args...); }; 
+      // With better compiler support it can be changed to:
+      //       auto bgCall = [&, args...]{ return (_worker.*func)(args...); }; 
       auto bgCall = std::bind(func, _worker.get(), std::forward<Args>(args)...);
       task_type task(std::move(bgCall));
       std::future<result_type> result = task.get_future();
