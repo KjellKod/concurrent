@@ -184,7 +184,7 @@ public:
       if (empty()) {
          auto p = std::make_shared<std::promise<result_type>>();
          std::future<result_type> future_result = p->get_future();
-         p->set_exception(std::make_exception_ptr(std::runtime_error("concurrent was cleared of background thread object")));
+         p->set_exception(std::make_exception_ptr(std::runtime_error("nullptr instantiated worker")));
          return future_result;
       }
 
