@@ -1,5 +1,7 @@
 // PUBLIC DOMAIN LICENSE: https://github.com/KjellKod/Concurrent/blob/master/LICENSE
 // 
+// Repository: https://github.com/KjellKod/Concurrent
+// 
 // Concurrent Wrapper
 // ===============================
 // Wrap "any" object to get concurrent access with asynchronous execution in FIFO  order.
