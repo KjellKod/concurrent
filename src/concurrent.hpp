@@ -55,7 +55,7 @@ namespace concurrent_helper {
    void set_value(std::promise<Fut>& p, F& f, T& t) {
       p.set_value(f(t));
    }
-   
+
    /** helper for setting promise/exception for promise of void */
    template<typename F, typename T>
    void set_value(std::promise<void>& p, F& f, T& t) {
@@ -64,15 +64,11 @@ namespace concurrent_helper {
    }
 } // namespace concurrent_helper
 
-
-
-
-
 /**
  * Basically a light weight active object. www.kjellkod.cc/active-object-with-cpp0x#TOC-Active-Object-the-C-11-way
  * all input happens in the background. At shutdown it exits only after all 
  * queued requests are handled.
- */ 
+ */
 template <class T> class concurrent {
    mutable std::unique_ptr<T> _worker;
    mutable shared_queue<concurrent_helper::Callback> _q;
@@ -88,32 +84,33 @@ template <class T> class concurrent {
    }
 
 public:
+
    /**  Constructs an unique_ptr<T>  that is the background object 
     * @param args to construct the unique_ptr<T> in-place
     */
    template<typename ... Args>
    concurrent(Args&&... args)
-   : concurrent(std2::make_unique<T>(std::forward<Args>(args)...)) {}
-   
+   : concurrent(std2::make_unique<T>(std::forward<Args>(args)...)) {
+   }
+
    /**
     * Moves in a unique_ptr<T> to be the background object. Starts up the worker thread
     * @param workerto act as the background object
     */
-   concurrent(std::unique_ptr<T> worker) 
+   concurrent(std::unique_ptr<T> worker)
    : _worker(std::move(worker))
    , _done(false)
    , _thd([ = ]{concurrent_helper::Callback call;
-      while (_worker && !_done) { 
-         _q.wait_and_pop(call);  
-         call(); 
-      }}) 
-    {     
+      while (_worker && !_done) {
+
+         _q.wait_and_pop(call);
+                 call();
+      }}) {
    }
 
-         
    /**
     * Clean shutdown. All pending messages are executed before the shutdown message is received
-    */      
+    */
    virtual ~concurrent() {
       _q.push([ = ]{_done = true;});
       if (_thd.joinable()) {
@@ -121,15 +118,22 @@ public:
       }
       _worker.reset(nullptr);
    }
-  
+
+
+   /** Disable copy and assignment operators */
+   concurrent(const concurrent&) = delete;
+   concurrent& operator=(const concurrent&) = delete;
+
+   
+   
    /**
     * @return whether the background object is still active. If the thread is stopped then 
     * the background object will also be removed. 
     */
-   bool empty() const { 
-      return !_worker; 
+   bool empty() const {
+      return !_worker;
    }
-   
+
    /**
     *  Following Herb Sutter's approach for a concurrent wrapper
     * using std::promise and setting the value using a lambda approach
@@ -145,13 +149,12 @@ public:
    template<typename F> // typename std::result_of< decltype(func)(T*, Args...)>::type
    auto lambda(F func) const -> std::future<typename std::result_of<decltype(func)(T&)>::type> {
       typedef typename std::result_of < decltype(func)(T&)>::type result_type;
-      auto p = std::make_shared < std::promise<result_type>>();
+      auto p = std::make_shared < std::promise < result_type >> ();
       auto future_result = p->get_future();
 
       if (empty()) {
          p->set_exception(std::make_exception_ptr(std::runtime_error("nullptr instantiated worker")));
-      }
-      else {
+      } else {
          _q.push([ = ]{
             try {
                concurrent_helper::set_value(*p, func, *(_worker.get()));
@@ -161,8 +164,8 @@ public:
       }
       return future_result;
    }
-   
-    
+
+
    /**
     * Following Kjell Hedström (KjellKod)'s approach for a concurrent wrapper in g3log
     * using std::packaged_task and and std::bind (since lambda currently cannot  
@@ -175,14 +178,14 @@ public:
     * @param func function pointer to the wrapped object
     * @param args parameter pack to executed by the function pointer. 
     * @return std::future return of the background executed function
-    */                                                          
+    */
    template<typename AsyncCall, typename... Args>
-   auto call(AsyncCall func, Args&&... args) const ->   std::future<typename std::result_of< decltype(func)(T*, Args...)>::type>  {
-      typedef typename std::result_of <decltype(func)(T*, Args...)>::type result_type;      
-      typedef std::packaged_task<result_type()> task_type;
+   auto call(AsyncCall func, Args&&... args) const -> std::future<typename std::result_of< decltype(func)(T*, Args...)>::type> {
+      typedef typename std::result_of < decltype(func)(T*, Args...)>::type result_type;
+      typedef std::packaged_task < result_type() > task_type;
 
       if (empty()) {
-         auto p = std::make_shared<std::promise<result_type>>();
+         auto p = std::make_shared<std::promise < result_type >> ();
          std::future<result_type> future_result = p->get_future();
          p->set_exception(std::make_exception_ptr(std::runtime_error("nullptr instantiated worker")));
          return future_result;
