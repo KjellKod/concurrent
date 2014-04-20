@@ -30,6 +30,7 @@ See example from the unit tests:
 *Using a function-pointer syntax. 
 * Made safer from unintentianal abuse (compared to the lambda call) since only **one** action can be done per each asynchronous request.
 
+
 See example from unit tests:
 ```cpp
    concurrent<Greetings> greeting2{"Hello World"};
