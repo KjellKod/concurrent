@@ -13,17 +13,25 @@ The concurrent\<T\> wrapper can be called in two ways.
 
 See example from the unit tests:
 ```cpp
-   concurrent<Greetings> greeting{"Hello World"};
-   
-   // execute two Hello calls in one asynchronous operation. 
-   std::future<std::string> response = greeting.lambda( 
-         [](Greetings& g) { 
+class Greetings {
+ std::string _msg;
+ public:
+  explicit Greetings(const std::string& msg) : _msg(msg){}
+  std::string Hello(size_t number) { 
+     return {_msg + " " + std::to_string(number)};
+  }
+  
+  concurrent<Greetings> greeting{"Hello World"};
+  // execute two Hello calls in one asynchronous operation. 
+  std::future<std::string> response = greeting.lambda( 
+      [](Greetings& g) { 
             std::string reply{g.Hello(123) + " " + g.Hello(456)}; 
             return reply;
-         }
+          }
        ); // Hello World 123 Hello World 456
-
-   EXPECT_EQ(response.get(), "Hello World 123 Hello World 456");
+  EXPECT_EQ(response.get(), "Hello World 123 Hello World 456");
+  
+  
 ```
 
 **2** As used in the Asynchronous, "Crash-Safe" logger, [G3Log](https://bitbucket.org/KjellKod/g3log) 
