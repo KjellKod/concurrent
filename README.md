@@ -6,6 +6,7 @@ Makes access to *any* object asynchronous. All asynchronous calls will be execut
 The concurrent\<T\> wrapper can be called in two ways. 
 
 **1** As suggested by [Herb Sutter in C++ and Beyond 2012] (http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism)
+
 *Many actions can be bundled together in one asynchronous operation
 *All calls are made through a lambda call that takes a reference to the wrapped object as input argument
 *See example from the unit tests:
