@@ -36,7 +36,7 @@ See example from unit tests:
    concurrent<Greetings> greeting2{"Hello World"};
    // execute ONE Hello in one asynchronous operation. 
    std::future<std::string> response2 = greeting.call(&Greetings::Hello, 789); 
-   EXPECT_EQ(response2.get(), "Hello World 123 Hello World 456");
+   EXPECT_EQ(response2.get(), "Hello World 789");
 ```
 
 
