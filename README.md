@@ -25,10 +25,10 @@ class Greetings {
   // execute two Hello calls in one asynchronous operation. 
   std::future<std::string> response = greeting.lambda( 
       [](Greetings& g) { 
-            std::string reply{g.Hello(123) + " " + g.Hello(456)}; 
-            return reply;
-          }
-       ); // Hello World 123 Hello World 456
+         std::string reply{g.Hello(123) + " " + g.Hello(456)}; 
+         return reply;
+       }
+     ); // Hello World 123 Hello World 456
   EXPECT_EQ(response.get(), "Hello World 123 Hello World 456");
   
   
