@@ -34,7 +34,7 @@ class Greetings {
   
 ```
 
-**2** As used in the Asynchronous, "Crash-Safe" logger, [G3Log](https://bitbucket.org/KjellKod/g3log) 
+**2** As used in the *asynchronous, "crash-safe" logger, [G3Log](https://bitbucket.org/KjellKod/g3log)* 
 *Using a function-pointer syntax. 
 * Made safer from unintentianal abuse (compared to the lambda call) since only **one** action can be done per each asynchronous request.
 
