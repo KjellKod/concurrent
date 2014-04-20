@@ -41,6 +41,8 @@ See example from unit tests:
 
 
 **3** Both can be used for derived objects of abstract types
+  
+  
   *See example from unit tests:
 ```cpp
    struct Animal {
@@ -62,7 +64,7 @@ See example from unit tests:
    
  
   // Internally the concurrent<T> wrapper keeps the object in a std::unique_ptr<T>  
-  concurrent<Animal> animal1{std::unique_ptr<Animal>(new Dog)};  // two example how this can be achieved
+  concurrent<Animal> animal1{std::unique_ptr<Animal>(new Dog)};  
   concurrent<Animal> animal2{std::unique_ptr<Animal>(new Cat)};
 
   auto make_sound = [](Animal& animal) { return animal.sound();  };
