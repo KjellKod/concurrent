@@ -40,7 +40,7 @@ See example from unit tests:
 
 
 **3** Both can be used for derived objects of abstract types
-..*See example from unit tests:
+  *See example from unit tests:
 ```cpp
    struct Animal {
       virtual std::string sound() = 0;
