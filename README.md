@@ -9,7 +9,7 @@ The concurrent\<T\> wrapper can be called in two ways.
 
  ** Many actions can be bundled together in one asynchronous operation.
  
- **All calls are made through a lambda call that has to take a reference to the wrapped object as input argument. 
+ **All calls are made through a lambda call that takes a reference to the wrapped object as input argument. 
 
 See example from the unit tests:
 ```cpp
