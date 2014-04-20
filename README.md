@@ -69,8 +69,11 @@ class Greetings {
   concurrent<Animal> animal1{std::unique_ptr<Animal>(new Dog)};  
   concurrent<Animal> animal2{std::unique_ptr<Animal>(new Cat)};
 
+  // lambda syntax
   auto make_sound = [](Animal& animal) { return animal.sound();  };
-   
   EXPECT_EQ("Wof Wof", animal1.lambda(make_sound).get());
-  EXPECT_EQ("Miauu Miauu", animal2.lambda(make_sound).get());
+
+  // function-call syntax
+  EXPECT_EQ("Miauu Miauu", animal2.call(&Animal::sound).get());
+
   ```
