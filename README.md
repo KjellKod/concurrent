@@ -61,7 +61,7 @@ See example from unit tests:
    
    
  
-  *// Internally the concurrent\<T\> wrapper keeps the object in a std::unique_ptr\<T\>  
+  // Internally the concurrent\<T\> wrapper keeps the object in a std::unique_ptr\<T\>  
   concurrent<Animal> animal1{std::unique_ptr<Animal>(new Dog)};  // two example how this can be achieved
   concurrent<Animal> animal2{std::unique_ptr<Animal>(new Cat)};
 
@@ -69,4 +69,4 @@ See example from unit tests:
    
   EXPECT_EQ("Wof Wof", animal1.lambda(make_sound).get());
   EXPECT_EQ("Miauu Miauu", animal2.lambda(make_sound).get());
-e ```
+  ```
