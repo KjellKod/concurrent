@@ -33,7 +33,7 @@ class Greetings {
 ```
 
 **2** As used in the *asynchronous, "crash-safe" logger, [G3Log](https://bitbucket.org/KjellKod/g3log)* , using a function-pointer syntax. 
-* This is a safer approch, it's protected from unintentianal abuse. Compare this to the lambda approach where the lambda capture is powerful but can cause unintended problems if the lambda capturing used irresponsibly. 
+* This is a safer approch, it's protected from unintentianal abuse. Compare this to the lambda approach where the lambda capture is powerful but can cause unintended problems if the lambda capturing ia used irresponsibly. 
 * Only  **one** action can be done per each asynchronous request.
 * See example from unit tests:
 ```cpp
