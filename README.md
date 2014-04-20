@@ -7,9 +7,9 @@ The concurrent\<T\> wrapper can be called in two ways.
 
 **1** As suggested by [Herb Sutter in C++ and Beyond 2012] (http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism). 
 
- ** Many actions can be bundled together in one asynchronous operation.
+ *Many actions can be bundled together in one asynchronous operation.
  
- **All calls are made through a lambda call that takes a reference to the wrapped object as input argument. 
+ *All calls are made through a lambda call that takes a reference to the wrapped object as input argument. 
 
 See example from the unit tests:
 ```cpp
@@ -35,7 +35,8 @@ class Greetings {
 ```
 
 **2** As used in the *asynchronous, "crash-safe" logger, [G3Log](https://bitbucket.org/KjellKod/g3log)* , using a function-pointer syntax. 
-* Made safer from unintentianal abuse (compared to the lambda call) since only **one** action can be done per  uach asynchronous request.
+* This is a safer approch, it's protected from unintentianal abuse. Compare this to the lambda approach where the lambda capture is powerful but can cause unintended problems if the lambda capturing used irresponsibly. 
+* Only  **one** action can be done per each asynchronous request.
 
 
 See example from unit tests:
