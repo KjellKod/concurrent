@@ -42,7 +42,7 @@ See example from unit tests:
    struct Animal {
       virtual std::string sound() = 0;
    };
-
+  
    struct Dog : public Animal {
       std::string sound() override {
          return  {"Wof Wof"};
