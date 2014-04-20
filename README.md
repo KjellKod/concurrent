@@ -4,6 +4,7 @@ concurrent\<T\> wrapper
 Makes access to *any* object asynchronous. All asynchronous calls will be executed in the background and in FIFO order.
 
 The concurrent\<T\> wrapper can be called in two ways. 
+
 **1** As suggested by [Herb Sutter in C++ and Beyond 2012] (http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism). 
  ..*Many actions can be bundled together in one asynchronous operation. 
    ..*All calls are made through a lambda call that has to take a reference to the wrapped object as input argument. 
