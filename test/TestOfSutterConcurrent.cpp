@@ -44,6 +44,39 @@ TEST(TestOfSutterConcurrent, Clear_plain) {
    EXPECT_FALSE(cs.empty());
 }
 
+namespace README_EXAMPLE {
+class Greetings {
+ std::string _msg;
+ public:
+  explicit Greetings(const std::string& msg) : _msg(msg){}
+  std::string Hello(size_t number) { 
+     return {_msg + " " + std::to_string(number)};
+  }
+};
+} // README_EXAMPLE
+
+TEST(TestOfConcurrent, README_Example) {
+   using namespace README_EXAMPLE;
+   concurrent<Greetings> greeting{"Hello World"};
+   // execute two Hello calls in one asynchronous operation. 
+   std::future<std::string> response = greeting.lambda( 
+         [](Greetings& g) { 
+            std::string reply{g.Hello(123) + " " + g.Hello(456)}; 
+            return reply;
+         }
+       ); // Hello World 123 Hello World 456
+   EXPECT_EQ(response.get(), "Hello World 123 Hello World 456");
+
+
+
+
+   concurrent<Greetings> greeting2{"Hello World"};
+   // execute ONE Hello in one asynchronous operation. 
+   std::future<std::string> response2 = greeting.call(&Greetings::Hello, 789); 
+   EXPECT_EQ(response2.get(), "Hello World 789");
+}
+
+
 TEST(TestOfSutterConcurrent, Hello_World) {
    concurrent<std::string> cs{std2::make_unique<std::string>("Hello World")};
    EXPECT_FALSE(cs.empty());
@@ -133,7 +166,7 @@ TEST(TestOfSutterConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
       EXPECT_LT(std::chrono::duration_cast<std::chrono::seconds>(clock::now() - start).count(), 1);
    } // at destruction all 1 second calls will be executed before we quit
 
-   EXPECT_TRUE(std::chrono::duration_cast<std::chrono::seconds>(clock::now() - start).count() >= 10); // 
+   EXPECT_TRUE(std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - start).count() >=(10*200)); // 
 }
 
 TEST(TestOfSutterConcurrent, unique_ptr_wrapps_concurrent) {
@@ -147,7 +180,7 @@ TEST(TestOfSutterConcurrent, unique_ptr_wrapps_concurrent) {
 
 
 TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minute) {
-   std::cout << "60*10 thread runs. Please wait a minute" << std::endl;
+   std::cout << "60*5 thread runs. Please wait a minute" << std::endl;
    for (size_t howmanyflips = 0; howmanyflips < 60; ++howmanyflips) {
       std::cout << "." << std::flush;
       std::atomic<size_t> count_of_flip{0};
@@ -160,25 +193,19 @@ TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minu
          auto try2 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
          auto try3 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
          auto try4 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
-         auto try5 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
-         auto try6 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
-         auto try7 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
-         auto try8 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
-         auto try9 = std::async(std::launch::async, DoALambdaFlip, std::ref(flipOnceObject));
-
          // scope exit. ALL jobs will be executed before this finished. 
          //This means that all 10 jobs in the loop must be done
          // all 10 will wait here till they are finished
       }
       ASSERT_EQ(1, count_of_flip);
-      ASSERT_EQ(10, total_thread_access);
+      ASSERT_EQ(5, total_thread_access);
    }
    std::cout << std::endl;
 }
 
 
 TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicInside_Wait1Minute) {
-   std::cout << "60*10 thread runs. Please wait a minute" << std::endl;
+   std::cout << "60*5 thread runs. Please wait a minute" << std::endl;
    for (size_t howmanyflips = 0; howmanyflips < 60; ++howmanyflips) {
       std::cout << "." << std::flush;
 
@@ -192,18 +219,12 @@ TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicIns
          auto try2 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
          auto try3 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
          auto try4 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
-         auto try5 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
-         auto try6 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
-         auto try7 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
-         auto try8 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
-         auto try9 = std::async(std::launch::async, DoALambdaFlipAtomic, std::ref(flipOnceObject));
-
          // scope exit. ALL jobs will be executed before this finished. 
          //This means that all 10 jobs in the loop must be done
          // all 10 will wait here till they are finished
       }
       ASSERT_EQ(1, count_of_flip);
-      ASSERT_EQ(10, total_thread_access);
+      ASSERT_EQ(5, total_thread_access);
    }
    std::cout << std::endl;
 
