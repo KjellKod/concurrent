@@ -36,6 +36,10 @@ namespace test_helper {
       std::string sayHello() {
          return {"Hello World"};
       }
+
+     std::string ping(size_t number) { 
+        return {"Hello World" + std::to_string(number)};
+      }
    };
 
 
@@ -88,7 +92,7 @@ namespace test_helper {
    /** Verify concurrent runs,. "no" delay for the caller. */
    struct DelayedCaller {
       void DoDelayedCall() {
-         std::this_thread::sleep_for(std::chrono::seconds(1));
+         std::this_thread::sleep_for(std::chrono::milliseconds(200));
       }
    };
 
@@ -116,7 +120,7 @@ namespace test_helper {
 
       void doFlipAtomic() {
          if (!_is_flipped) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(random_int(0, 1000)));
+            std::this_thread::sleep_for(std::chrono::milliseconds(random_int(0, 500)));
             _is_flipped = true;
             ++(*_stored_counter);
          }

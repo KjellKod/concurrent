@@ -44,6 +44,39 @@ TEST(TestOfSutterConcurrent, Clear_plain) {
    EXPECT_FALSE(cs.empty());
 }
 
+namespace README_EXAMPLE {
+class Greetings {
+ std::string _msg;
+ public:
+  explicit Greetings(const std::string& msg) : _msg(msg){}
+  std::string Hello(size_t number) { 
+     return {_msg + " " + std::to_string(number)};
+  }
+};
+} // README_EXAMPLE
+
+TEST(TestOfConcurrent, README_Example) {
+   using namespace README_EXAMPLE;
+   concurrent<Greetings> greeting{"Hello World"};
+   // execute two Hello calls in one asynchronous operation. 
+   std::future<std::string> response = greeting.lambda( 
+         [](Greetings& g) { 
+            std::string reply{g.Hello(123) + " " + g.Hello(456)}; 
+            return reply;
+         }
+       ); // Hello World 123 Hello World 456
+   EXPECT_EQ(response.get(), "Hello World 123 Hello World 456");
+
+
+
+
+   concurrent<Greetings> greeting2{"Hello World"};
+   // execute ONE Hello in one asynchronous operation. 
+   std::future<std::string> response2 = greeting.call(&Greetings::Hello, 789); 
+   EXPECT_EQ(response2.get(), "Hello World 789");
+}
+
+
 TEST(TestOfSutterConcurrent, Hello_World) {
    concurrent<std::string> cs{std2::make_unique<std::string>("Hello World")};
    EXPECT_FALSE(cs.empty());
@@ -133,7 +166,7 @@ TEST(TestOfSutterConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
       EXPECT_LT(std::chrono::duration_cast<std::chrono::seconds>(clock::now() - start).count(), 1);
    } // at destruction all 1 second calls will be executed before we quit
 
-   EXPECT_TRUE(std::chrono::duration_cast<std::chrono::seconds>(clock::now() - start).count() >= 10); // 
+   EXPECT_TRUE(std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - start).count() >=(10*200)); // 
 }
 
 TEST(TestOfSutterConcurrent, unique_ptr_wrapps_concurrent) {
