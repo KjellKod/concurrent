@@ -79,14 +79,9 @@ template <class T> class concurrent {
    bool _done; // not atomic since only the thread is touching it
    std::thread _thd;
 
-   void run() const {
-      concurrent_helper::Callback call;
-      while (!_done) {
-         _q.wait_and_pop(call);
-         call();
-      }
-   }
-
+   concurrent(const concurrent&) = delete;
+   concurrent& operator=(const concurrent&) = delete; 
+   
 public:
    /**  Constructs an unique_ptr<T>  that is the background object 
     * @param args to construct the unique_ptr<T> in-place
@@ -97,7 +92,7 @@ public:
    
    /**
     * Moves in a unique_ptr<T> to be the background object. Starts up the worker thread
-    * @param workerto act as the background object
+    * @param worker to act as the background object
     */
    concurrent(std::unique_ptr<T> worker) 
    : _worker(std::move(worker))

@@ -98,55 +98,35 @@ namespace test_helper {
       std::atomic<size_t>* _stored_counter;
       std::atomic<size_t>* _stored_attempts;
       bool _is_flipped;
-      size_t _counter;
-      size_t _attempts;
+
 
    public:
 
       explicit FlipOnce(std::atomic<size_t>* c, std::atomic<size_t>* t)
       : _stored_counter(c), _stored_attempts(t)
-      , _is_flipped(false), _counter(0), _attempts(0) {
+      , _is_flipped(false) {
       }
 
-      ~FlipOnce() {
-         if (0 == *_stored_counter) {
-            //FlipOnce with NO atomics in the doFlip operation
-            (*_stored_counter) = _counter;
-            (*_stored_attempts) = _attempts;
-         } else {
-            // FlipOnce WITH atomics in the doFlipAtomic operation
-            assert(0 == _counter);
-            assert(0 == _attempts);
-         }
-      }
+      ~FlipOnce() {}
 
       /** Void flip will  count up NON ATOMIC internal variables. They are non atomic to avoid 
       * any kind of unforseen atomic synchronization. Only in the destructor will the values 
       * be saved to the atomic storages
       */ 
-      void doFlip() {
-         if (!_is_flipped) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(random_int(0, 1000)));
-            _is_flipped = true;
-            _counter++;
-         }
-         _attempts++;
-      }
 
       void doFlipAtomic() {
          if (!_is_flipped) {
             std::this_thread::sleep_for(std::chrono::milliseconds(random_int(0, 1000)));
             _is_flipped = true;
-            (*_stored_counter)++;
+            ++(*_stored_counter);
          }
-         (*_stored_attempts)++;
+         ++(*_stored_attempts);
       }
    };
 
-   std::future<void> DoAFlip(concurrent<FlipOnce>& flipper);
-   std::future<void> DoAFlipAtomic(concurrent<FlipOnce>& flipper);
-   std::future<void> DoALambdaFlip(concurrent<FlipOnce>& flipper);
-   std::future<void> DoALambdaFlipAtomic(concurrent<FlipOnce>& flipper);
+   // calls from a async... returning the "void" after a future.get() so as not to have a future-of-a-future
+   void DoAFlipAtomic(concurrent<FlipOnce>& flipper);
+   void DoALambdaFlipAtomic(concurrent<FlipOnce>& flipper);
    
 
    struct Animal {

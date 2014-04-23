@@ -146,69 +146,33 @@ TEST(TestOfConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
 
 
 
-TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minute) {
-   std::cout << "60*10 thread runs. Please wait a minute" << std::endl;
-   for (size_t howmanyflips = 0; howmanyflips < 60; ++howmanyflips) {
-      std::cout << "." << std::flush;
-      std::atomic<size_t> count_of_flip{0};
-      std::atomic<size_t> total_thread_access{0};
-      {
-         concurrent<FlipOnce> flipOnceObject{&count_of_flip, &total_thread_access};
-         ASSERT_EQ(0, count_of_flip);
-         auto try0 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try1 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try2 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try3 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try4 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try5 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try6 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try7 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try8 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-         auto try9 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
-
-         // scope exit. ALL jobs will be executed before this finished. 
-         //This means that all 10 jobs in the loop must be done
-         // all 10 will wait here till they are finished
-      }
-      ASSERT_EQ(1, count_of_flip);
-      ASSERT_EQ(10, total_thread_access);
-   }
-   std::cout << std::endl;
-}
-
-
-
 TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicInside_Wait1Minute) {
-   std::cout << "60*10 thread runs. Please wait a minute" << std::endl;
-   for (size_t howmanyflips = 0; howmanyflips < 60; ++howmanyflips) {
+   std::cout << "100 thread runs. Please wait a minute" << std::endl;
+   std::vector<std::future<void>> result;
+
+   std::atomic<size_t> count_of_flip{0};
+   std::atomic<size_t> total_thread_access{0};
+   concurrent<FlipOnce> flipOnceObject{&count_of_flip, &total_thread_access};
+   ASSERT_EQ(0, count_of_flip);
+
+   for (size_t howmanyflips = 0; howmanyflips < 100; ++howmanyflips) {
       std::cout << "." << std::flush;
-
-      std::atomic<size_t> count_of_flip{0};
-      std::atomic<size_t> total_thread_access{0};
-      {
-         concurrent<FlipOnce> flipOnceObject{&count_of_flip, &total_thread_access};
-         ASSERT_EQ(0, count_of_flip);
-         auto try0 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try1 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try2 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try3 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try4 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try5 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try6 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try7 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try8 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-         auto try9 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
-
-         // scope exit. ALL jobs will be executed before this finished. 
-         //This means that all 10 jobs in the loop must be done
-         // all 10 will wait here till they are finished
-      }
-      ASSERT_EQ(1, count_of_flip);
-      ASSERT_EQ(10, total_thread_access);
+      result.push_back(std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject)));
    }
+
+   // wait for all the async to finish.
+   for (auto& res : result) {
+      res.get(); // future of future
+   }
+
+   EXPECT_EQ(1, count_of_flip);
+   EXPECT_EQ(100, total_thread_access);
    std::cout << std::endl;
 
 }
+
+
+
 
 
 

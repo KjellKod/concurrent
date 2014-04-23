@@ -18,20 +18,12 @@ namespace test_helper {
    
    
 
-   std::future<void> DoAFlip(concurrent<FlipOnce>& flipper) {
-      return flipper.call(&FlipOnce::doFlip);
+   void DoAFlipAtomic(concurrent<FlipOnce>& flipper) {
+      return flipper.call(&FlipOnce::doFlipAtomic).get();
    }
 
-   std::future<void> DoAFlipAtomic(concurrent<FlipOnce>& flipper) {
-      return flipper.call(&FlipOnce::doFlipAtomic);
-   }
-
-   std::future<void> DoALambdaFlip(concurrent<FlipOnce>& flipper) {
-      return flipper.lambda([](FlipOnce& flip) { flip.doFlip();} );
-   }
-
-   std::future<void> DoALambdaFlipAtomic(concurrent<FlipOnce>& flipper) {
-      return flipper.lambda([] (FlipOnce& flip) { flip.doFlipAtomic(); });
+   void DoALambdaFlipAtomic(concurrent<FlipOnce>& flipper) {
+      return flipper.lambda([] (FlipOnce& flip) { flip.doFlipAtomic(); }).get();
    }
 
 
