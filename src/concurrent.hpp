@@ -111,7 +111,6 @@ public:
       if (_thd.joinable()) {
          _thd.join();
       }
-      _worker.reset(nullptr);
    }   
    
    /**
@@ -134,26 +133,24 @@ public:
     *             the lambda will be called by the wrapper for the given lambda
     * @return std::future return of the lambda
     */
-   template<typename F> // typename std::result_of< decltype(func)(T*, Args...)>::type
-   auto lambda(F func) const -> std::future<typename std::result_of<decltype(func)(T&)>::type> {
-      typedef typename std::result_of < decltype(func)(T&)>::type result_type;
-      auto p = std::make_shared < std::promise < result_type >> ();
+   template<typename F> 
+   auto lambda(F func) const -> std::future<decltype(func(*_worker))> {   
+      auto p = std::make_shared<std::promise<decltype(func(*_worker))>>();
       auto future_result = p->get_future();
-
+      
       if (empty()) {
          p->set_exception(std::make_exception_ptr(std::runtime_error("nullptr instantiated worker")));
       } else {
          _q.push([ = ]{
             try {
-               concurrent_helper::set_value(*p, func, *(_worker.get()));
+               concurrent_helper::set_value(*p, func, *_worker);
             } catch (...) {
                p->set_exception(std::current_exception()); }
          });
       }
       return future_result;
-   }
-
-
+   }  
+   
    /**
     * Following Kjell Hedström (KjellKod)'s approach for a concurrent wrapper in g3log
     * using std::packaged_task and and std::bind (since lambda currently cannot  
@@ -169,8 +166,8 @@ public:
     */
    template<typename AsyncCall, typename... Args>
    auto call(AsyncCall func, Args&&... args) const -> std::future<typename std::result_of< decltype(func)(T*, Args...)>::type> {
-      typedef typename std::result_of < decltype(func)(T*, Args...)>::type result_type;
-      typedef std::packaged_task < result_type() > task_type;
+      typedef typename std::result_of<decltype(func)(T*, Args...)>::type result_type;
+      typedef std::packaged_task<result_type()> task_type;
 
       if (empty()) {
          auto p = std::make_shared<std::promise<result_type>>();

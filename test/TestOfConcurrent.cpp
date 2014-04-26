@@ -104,12 +104,21 @@ TEST(TestOfConcurrent, KlunkyUsage__Disambiguity__overloads) {
 }
 
 
+/** Oops. The straight forward approach can also be backwards */
+TEST(TestOfConcurrent, KlunkyUsage__Disambiguity__overloads_repeat) {
+   concurrent<std::string> hello;
+   typedef std::string&(std::string::*append_func)(const std::string&);
+   append_func appender = &std::string::append;
+   auto response = hello.call(appender, "Hello World");
+   EXPECT_EQ("Hello World", response.get());   
+}
+
+
 
 // This just don't work... At least not easily
 TEST(TestOfConcurrent, AbstractInterface__Works__Fine) {
     concurrent<Animal> animal1{std::unique_ptr<Animal>(new Dog)}; 
     concurrent<Animal> animal2{std::unique_ptr<Animal>(new Cat)}; 
-   
    EXPECT_EQ("Wof Wof", animal1.call(&Animal::sound).get());
    EXPECT_EQ("Miauu Miauu", animal2.call(&Animal::sound).get());
 }

@@ -79,7 +79,7 @@ set_target_properties(concurrentwrapper_shared PROPERTIES LINKER_LANGUAGE CXX)
 
 set(GTEST_DIR ${DIR_3RDPARTY}/gtest-1.7.0)
 set(GTEST_INCLUDE_DIRECTORIES ${GTEST_DIR}/include ${GTEST_DIR} ${GTEST_DIR}/src)
-MESSAGE( "MEEESSSSSSSSSSSSSSAGE" ${GTEST_DIR})
+MESSAGE( "Attempt to build gtest. gtest directory: " ${GTEST_DIR})
 include_directories(${GTEST_INCLUDE_DIRECTORIES})
 add_library(gtest_170_lib ${GTEST_DIR}/src/gtest-all.cc)
 set_target_properties(gtest_170_lib  PROPERTIES COMPILE_DEFINITIONS "GTEST_HAS_RTTI=0")
