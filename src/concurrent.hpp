@@ -202,7 +202,7 @@ template <class T> class concurrent {
        * :   struct Hello { void foo(){...}
        *            concurrent<Hello>  h;
        *            for (int i = 0; i < 100; ++i) {
-       *               h.call(&Hello::foo);
+       *               h.fire(&Hello::foo);
        *             }
        */
    template<typename AsyncCall, typename... Args>
