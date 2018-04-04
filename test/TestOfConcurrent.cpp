@@ -152,6 +152,74 @@ TEST(TestOfConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
    EXPECT_TRUE(std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - start).count() >= (10 * 200)); //
 }
 
+namespace {
+   using FutureResult = std::future<std::string>;
+   using UniqueFutureResult = std::unique_ptr<FutureResult>;
+
+
+   struct HelloWorld {
+      size_t mCounter;
+
+      HelloWorld() : mCounter(0) {};
+      ~HelloWorld() = default;
+
+      std::string Hello(const std::string& str) {
+         std::ostringstream oss;
+         oss << str << " " << mCounter++;
+         return oss.str();
+      }
+   };
+
+
+   void WorkUntilFutureIsReady(const UniqueFutureResult& result) {
+      while (false == concurrent_helper::future_is_ready(result.get())) {
+         using namespace std::chrono_literals;
+         std::this_thread::sleep_for(1ms);
+      }
+   }
+} // namespace
+
+
+
+// Mimick a thread loop that continously goes to the `concurrent` object to check
+// if the work is ready for processing.
+TEST(TestOfConcurrent, DoWorkWhenReady) {
+   concurrent<HelloWorld> w;
+
+   UniqueFutureResult result;
+   std::vector<std::string> allResult;
+
+
+
+   size_t loopCount = 0;
+   const std::string text = "DoWorkWhenReady";
+   while (loopCount < 10) {
+      WorkUntilFutureIsReady(result);
+
+      if (result != nullptr) { // 1st loop, we have not yet a 'loaded' future
+         std::string reply = result->get();
+         allResult.push_back(reply);
+         std::string expected = "DoWorkWhenReady ";
+         expected += std::to_string(loopCount - 1);
+         EXPECT_EQ(expected, reply);
+      }
+      result.reset(new FutureResult(w.lambda([&text](HelloWorld & world) {
+         return world.Hello(text);
+      })));
+      ++loopCount;
+   }
+   ASSERT_TRUE(result != nullptr);
+
+   WorkUntilFutureIsReady(result);
+   std::string expected = "DoWorkWhenReady 9";
+   ASSERT_TRUE(result != nullptr);
+
+   auto reply = result->get();
+   EXPECT_EQ(expected, reply);
+   allResult.push_back(reply);
+   EXPECT_EQ(10, allResult.size());
+}
+
 
 
 
