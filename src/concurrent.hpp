@@ -62,6 +62,23 @@ namespace concurrent_helper {
       f(t);
       p.set_value();
    }
+
+   template<typename R>
+   bool is_ready(std::future<R> const& f) {
+      return f.wait_for(std::chrono::microseconds(0)) == std::future_status::ready;
+   }
+
+
+   // use case is to be able to check std::future from a continous processign thread
+   // once the future is ready only then should the result be retrieved
+   // (for possibly new chunk of work added to the concurrent worker
+   template<typename R>
+   bool future_is_ready(const std::future<R>* future) {
+      return (future == nullptr || is_ready(*future));
+   }
+
+
+
 } // namespace concurrent_helper
 
 /**
