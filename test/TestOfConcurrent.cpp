@@ -66,53 +66,55 @@ TEST(TestOfConcurrent, CompilerCheckForConcurrentUniqueArg) {
 
 
 TEST(TestOfConcurrent, Empty) {
-   concurrent<std::string> cs{std::unique_ptr<std::string>{nullptr}};
+   concurrent<Greeting> cs{std::unique_ptr<Greeting>{nullptr}};
    EXPECT_TRUE(cs.empty());
 
    // Calling an empty concurrent object will throw
-   EXPECT_ANY_THROW(cs.call(&std::string::substr, 0, std::string::npos).get());
+   EXPECT_ANY_THROW(cs.call(&Greeting::sayHello).get());
 }
 
 
 TEST(TestOfConcurrent, Is_Not_Empty) {
-   concurrent<std::string> cs{"Hello World"};
-   EXPECT_EQ("Hello World", cs.call(&std::string::substr, 0, std::string::npos).get());
+   concurrent<Greeting> cs{};
+   EXPECT_EQ("Hello World", cs.call(&Greeting::sayHello).get());
    EXPECT_FALSE(cs.empty());
 }
 
 TEST(TestOfConcurrent, Hello_World) {
-   concurrent<std::string> cs{std2::make_unique<std::string>("Hello World")};
+   concurrent<Greeting> cs{std2::make_unique<Greeting>()};
    EXPECT_FALSE(cs.empty());
-   EXPECT_EQ("Hello World", cs.call(&std::string::substr, 0, std::string::npos).get());
+   EXPECT_EQ("Hello World", cs.call(&Greeting::sayHello).get());
 }
 
 
-/** Oops. The straight forward approach can also be backwards */
-TEST(TestOfConcurrent, KlunkyUsage__Disambiguity__overloads) {
-   concurrent<std::string> hello;
-   // Unfortunately this does not compile. It cannot deduce the function pointer since
-   // the std::string::append has overloads
-   //auto response = hello.call(&std::string::append, msg);
+/** Oops. The straight forward approach can also be backwards 
+Proof of concept: With c++14 the two folling unit tests
+does not compile but the idea of the approach is left here as comments
+for people to see that it can be resolved
+*/
+//TEST(TestOfConcurrent, KlunkyUsage__Disambiguity__overloads) {
+//   concurrent<std::string> hello;
+//   // Unfortunately this does not compile. It cannot deduce the function pointer since
+//   // the std::string::append has overloads
+//   //auto response = hello.call(&std::string::append, msg);
+//
+//   // A very cumbersome work-around exist. Typedef the function pointer.
+//   // Set it and use it. ... So in this instance the Sutter approach would be
+//   // way easier.
+//   typedef std::string&(std::string::*append_type)(const std::string&);
+//   append_type appender = &std::string::append;
+//   auto response = hello.call(appender, "Hello World");
+//   EXPECT_EQ("Hello World", response.get());
+//}
 
-   // A very cumbersome work-around exist. Typedef the function pointer.
-   // Set it and use it. ... So in this instance the Sutter approach would be
-   // way easier.
-   typedef std::string&(std::string::*append_type)(const std::string&);
-   append_type appender = &std::string::append;
-   auto response = hello.call(appender, "Hello World");
-   EXPECT_EQ("Hello World", response.get());
-}
 
-
-/** Oops. The straight forward approach can also be backwards */
-TEST(TestOfConcurrent, KlunkyUsage__Disambiguity__overloads_repeat) {
-   concurrent<std::string> hello;
-   typedef std::string&(std::string::*append_func)(const std::string&);
-   append_func appender = &std::string::append;
-   auto response = hello.call(appender, "Hello World");
-   EXPECT_EQ("Hello World", response.get());
-}
-
+//TEST(TestOfConcurrent, KlunkyUsage__Disambiguity__overloads_repeat) {
+//   concurrent<std::string> hello;
+//   typedef std::string&(std::string::*append_func)(const std::string&);
+//   append_func appender = &std::string::append;
+//   auto response = hello.call(appender, "Hello World");
+//   EXPECT_EQ("Hello World", response.get());
+//}
 
 
 // This just don't work... At least not easily
