@@ -66,53 +66,55 @@ TEST(TestOfConcurrent, CompilerCheckForConcurrentUniqueArg) {
 
 
 TEST(TestOfConcurrent, Empty) {
-   concurrent<std::string> cs{std::unique_ptr<std::string>{nullptr}};
+   concurrent<Greeting> cs{std::unique_ptr<Greeting>{nullptr}};
    EXPECT_TRUE(cs.empty());
 
    // Calling an empty concurrent object will throw
-   EXPECT_ANY_THROW(cs.call(&std::string::substr, 0, std::string::npos).get());
+   EXPECT_ANY_THROW(cs.call(&Greeting::sayHello).get());
 }
 
 
 TEST(TestOfConcurrent, Is_Not_Empty) {
-   concurrent<std::string> cs{"Hello World"};
-   EXPECT_EQ("Hello World", cs.call(&std::string::substr, 0, std::string::npos).get());
+   concurrent<Greeting> cs{};
+   EXPECT_EQ("Hello World", cs.call(&Greeting::sayHello).get());
    EXPECT_FALSE(cs.empty());
 }
 
 TEST(TestOfConcurrent, Hello_World) {
-   concurrent<std::string> cs{std2::make_unique<std::string>("Hello World")};
+   concurrent<Greeting> cs{std2::make_unique<Greeting>()};
    EXPECT_FALSE(cs.empty());
-   EXPECT_EQ("Hello World", cs.call(&std::string::substr, 0, std::string::npos).get());
+   EXPECT_EQ("Hello World", cs.call(&Greeting::sayHello).get());
 }
 
 
-/** Oops. The straight forward approach can also be backwards */
-TEST(TestOfConcurrent, KlunkyUsage__Disambiguity__overloads) {
-   concurrent<std::string> hello;
-   // Unfortunately this does not compile. It cannot deduce the function pointer since
-   // the std::string::append has overloads
-   //auto response = hello.call(&std::string::append, msg);
+/** Oops. The straight forward approach can also be backwards 
+Proof of concept: With c++14 the two folling unit tests
+does not compile but the idea of the approach is left here as comments
+for people to see that it can be resolved
+*/
+//TEST(TestOfConcurrent, KlunkyUsage__Disambiguity__overloads) {
+//   concurrent<std::string> hello;
+//   // Unfortunately this does not compile. It cannot deduce the function pointer since
+//   // the std::string::append has overloads
+//   //auto response = hello.call(&std::string::append, msg);
+//
+//   // A very cumbersome work-around exist. Typedef the function pointer.
+//   // Set it and use it. ... So in this instance the Sutter approach would be
+//   // way easier.
+//   typedef std::string&(std::string::*append_type)(const std::string&);
+//   append_type appender = &std::string::append;
+//   auto response = hello.call(appender, "Hello World");
+//   EXPECT_EQ("Hello World", response.get());
+//}
 
-   // A very cumbersome work-around exist. Typedef the function pointer.
-   // Set it and use it. ... So in this instance the Sutter approach would be
-   // way easier.
-   typedef std::string&(std::string::*append_type)(const std::string&);
-   append_type appender = &std::string::append;
-   auto response = hello.call(appender, "Hello World");
-   EXPECT_EQ("Hello World", response.get());
-}
 
-
-/** Oops. The straight forward approach can also be backwards */
-TEST(TestOfConcurrent, KlunkyUsage__Disambiguity__overloads_repeat) {
-   concurrent<std::string> hello;
-   typedef std::string&(std::string::*append_func)(const std::string&);
-   append_func appender = &std::string::append;
-   auto response = hello.call(appender, "Hello World");
-   EXPECT_EQ("Hello World", response.get());
-}
-
+//TEST(TestOfConcurrent, KlunkyUsage__Disambiguity__overloads_repeat) {
+//   concurrent<std::string> hello;
+//   typedef std::string&(std::string::*append_func)(const std::string&);
+//   append_func appender = &std::string::append;
+//   auto response = hello.call(appender, "Hello World");
+//   EXPECT_EQ("Hello World", response.get());
+//}
 
 
 // This just don't work... At least not easily
@@ -150,6 +152,74 @@ TEST(TestOfConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
    } // at destruction all 1 second calls will be executed before we quit
 
    EXPECT_TRUE(std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - start).count() >= (10 * 200)); //
+}
+
+namespace {
+   using FutureResult = std::future<std::string>;
+   using UniqueFutureResult = std::unique_ptr<FutureResult>;
+
+
+   struct HelloWorld {
+      size_t mCounter;
+
+      HelloWorld() : mCounter(0) {};
+      ~HelloWorld() = default;
+
+      std::string Hello(const std::string& str) {
+         std::ostringstream oss;
+         oss << str << " " << mCounter++;
+         return oss.str();
+      }
+   };
+
+
+   void WorkUntilFutureIsReady(const UniqueFutureResult& result) {
+      while (false == concurrent_helper::future_is_ready(result.get())) {
+         using namespace std::chrono_literals;
+         std::this_thread::sleep_for(1ms);
+      }
+   }
+} // namespace
+
+
+
+// Mimick a thread loop that continously goes to the `concurrent` object to check
+// if the work is ready for processing.
+TEST(TestOfConcurrent, DoWorkWhenReady) {
+   concurrent<HelloWorld> w;
+
+   UniqueFutureResult result;
+   std::vector<std::string> allResult;
+
+
+
+   size_t loopCount = 0;
+   const std::string text = "DoWorkWhenReady";
+   while (loopCount < 10) {
+      WorkUntilFutureIsReady(result);
+
+      if (result != nullptr) { // 1st loop, we have not yet a 'loaded' future
+         std::string reply = result->get();
+         allResult.push_back(reply);
+         std::string expected = "DoWorkWhenReady ";
+         expected += std::to_string(loopCount - 1);
+         EXPECT_EQ(expected, reply);
+      }
+      result.reset(new FutureResult(w.lambda([&text](HelloWorld & world) {
+         return world.Hello(text);
+      })));
+      ++loopCount;
+   }
+   ASSERT_TRUE(result != nullptr);
+
+   WorkUntilFutureIsReady(result);
+   std::string expected = "DoWorkWhenReady 9";
+   ASSERT_TRUE(result != nullptr);
+
+   auto reply = result->get();
+   EXPECT_EQ(expected, reply);
+   allResult.push_back(reply);
+   EXPECT_EQ(10, allResult.size());
 }
 
 
