@@ -189,7 +189,7 @@ TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicIns
    std::atomic<size_t> count_of_flip{0};
    std::atomic<size_t> total_thread_access{0};
    concurrent<FlipOnce> flipOnceObject{&count_of_flip, &total_thread_access};
-   ASSERT_EQ(0, count_of_flip);
+   ASSERT_EQ(0U, count_of_flip);
 
    for (size_t howmanyflips = 0; howmanyflips < 100; ++howmanyflips) {
       std::cout << "." << std::flush;
@@ -201,8 +201,8 @@ TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicIns
       res.get(); // future of future
    }
 
-   EXPECT_EQ(1, count_of_flip);
-   EXPECT_EQ(100, total_thread_access);
+   EXPECT_EQ(1U, count_of_flip);
+   EXPECT_EQ(100U, total_thread_access);
 
    std::cout << std::endl;
 }
