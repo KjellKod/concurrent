@@ -111,7 +111,7 @@ namespace test_helper {
       , _is_flipped(false) {
       }
 
-      ~FlipOnce() {}
+      ~FlipOnce() = default;
 
       /** Void flip will  count up NON ATOMIC internal variables. They are non atomic to avoid 
       * any kind of unforseen atomic synchronization. Only in the destructor will the values 
