@@ -233,7 +233,6 @@ template <class T> class concurrent {
       //       auto bgCall = [&, args...]{ return (_worker.*func)(args...); };
       auto bgCall = std::bind(func, _worker.get(), std::forward<Args>(args)...);
       _q.push(bgCall);
-      return;
    }
 
    /// return snapshot of size
