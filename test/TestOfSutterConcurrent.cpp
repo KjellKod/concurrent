@@ -170,8 +170,7 @@ TEST(TestOfSutterConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
 }
 
 TEST(TestOfSutterConcurrent, unique_ptr_wrapps_concurrent) {
-   std::unique_ptr<concurrent<Greeting>> gossip;
-   gossip.reset(new concurrent<Greeting>());
+   auto gossip = std::make_unique<concurrent<Greeting>>();
    auto tjena = gossip->call(&Greeting::sayHello);
    EXPECT_EQ(tjena.get(), "Hello World");
 }
