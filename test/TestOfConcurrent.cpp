@@ -203,9 +203,9 @@ TEST(TestOfConcurrent, DoWorkWhenReady) {
          expected += std::to_string(loopCount - 1);
          EXPECT_EQ(expected, reply);
       }
-      result.reset(new FutureResult(w.lambda([&text](HelloWorld & world) {
+      result = std::make_unique<FutureResult>(w.lambda([&text](HelloWorld & world) {
          return world.Hello(text);
-      })));
+      }));
       ++loopCount;
    }
    ASSERT_TRUE(result != nullptr);
