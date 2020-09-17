@@ -250,7 +250,7 @@ TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicInside_Wa
 
 struct AddInt {
    std::vector<int>& collectedValues;
-   AddInt(std::vector<int>& values) : collectedValues(values) {}
+   explicit AddInt(std::vector<int>& values) : collectedValues(values) {}
    void Add(int value) {
       collectedValues.push_back(value);
    }
@@ -258,7 +258,7 @@ struct AddInt {
 
 
 struct ConcurrentAddInt : public concurrent<AddInt> {
-   ConcurrentAddInt(std::vector<int>& values) : concurrent<AddInt>(values) {}
+   explicit ConcurrentAddInt(std::vector<int>& values) : concurrent<AddInt>(values) {}
    virtual ~ConcurrentAddInt() = default;
 
    size_t size() override {
