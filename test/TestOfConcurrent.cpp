@@ -79,7 +79,7 @@ TEST(TestOfConcurrent, Is_Not_Empty) {
 }
 
 TEST(TestOfConcurrent, Hello_World) {
-   concurrent<Greeting> cs{std2::make_unique<Greeting>()};
+   concurrent<Greeting> cs{std::make_unique<Greeting>()};
    EXPECT_FALSE(cs.empty());
    EXPECT_EQ("Hello World", cs.call(&Greeting::sayHello).get());
 }

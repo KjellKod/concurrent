@@ -9,7 +9,6 @@
 
 #include "concurrent.hpp"
 #include "test_helper.hpp"
-#include "std2_make_unique.hpp"
 
 using namespace test_helper;
 
@@ -78,7 +77,7 @@ TEST(TestOfConcurrent, README_Example) {
 
 
 TEST(TestOfSutterConcurrent, Hello_World) {
-   concurrent<std::string> cs{std2::make_unique<std::string>("Hello World")};
+   concurrent<std::string> cs{std::make_unique<std::string>("Hello World")};
    EXPECT_FALSE(cs.empty());
    EXPECT_EQ("Hello World", cs.lambda([](std::string & str) {
                                          return str.substr(0, std::string::npos); 
