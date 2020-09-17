@@ -32,7 +32,7 @@ class shared_queue {
 
 public:
 
-   shared_queue() {}
+   shared_queue() = default;
 
    void push(T item) {
       {
