@@ -7,8 +7,6 @@
 #include <random>
 #include <thread>
 #include <future>
-#include <cassert>
-#include <iostream>
 #include "concurrent.hpp"
 #include "moveoncopy.hpp"
 
@@ -183,7 +181,7 @@ namespace {
 
 
 
-// Mimick a thread loop that continously goes to the `concurrent` object to check
+// Mimick a thread loop that continuously goes to the `concurrent` object to check
 // if the work is ready for processing.
 TEST(TestOfConcurrent, DoWorkWhenReady) {
    concurrent<HelloWorld> w;
