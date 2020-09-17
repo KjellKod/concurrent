@@ -172,7 +172,7 @@ namespace {
 
 
    void WorkUntilFutureIsReady(const UniqueFutureResult& result) {
-      while (false == concurrent_helper::future_is_ready(result.get())) {
+      while (!concurrent_helper::future_is_ready(result.get())) {
          using namespace std::chrono_literals;
          std::this_thread::sleep_for(1ms);
       }
