@@ -29,6 +29,6 @@ namespace std2 {
    template<typename T >
    inline constexpr bool is_nothrow_move_assignable_v = std::is_nothrow_move_assignable_v<T>;
 #endif
-}
+}  // namespace std2
 
 #endif
