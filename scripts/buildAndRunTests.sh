@@ -10,5 +10,4 @@ mkdir -p  build_travis
 cd build_travis
 cmake  ..
 cmake --build .
-ls
-ctest -V 
+./UnitTestRunner
