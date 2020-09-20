@@ -1,3 +1,5 @@
+#include "concurrent.hpp"
+
 #include <gtest/gtest.h>
 #include <string>
 #include <atomic>
@@ -6,8 +8,6 @@
 #include <thread>
 #include <future>
 
-
-#include "concurrent.hpp"
 #include "test_helper.hpp"
 
 using namespace test_helper;

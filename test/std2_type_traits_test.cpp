@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "std2_type_traits.hpp"
+
+#include <gtest/gtest.h>
 
 namespace {
 struct NothrowMoveConstructible {
@@ -25,14 +25,14 @@ struct ThrowMoveAssignable {
 } // namespace
 
 
-TEST(TestOfStdTypeTraits, CompileTimeCheckForNothrowMoveConstructible) {
+TEST(TestOfStdTypeTraits, CompilerCheckForNothrowMoveConstructible) {
    static_assert(std2::is_nothrow_move_constructible_v<NothrowMoveConstructible>,
       "NothrowMoveConstructible has no throwing move constructor");
    static_assert(std2::is_nothrow_move_constructible_v<ThrowMoveConstructible> == false,
       "ThrowMoveConstructible has throwing move constructor");
 }
 
-TEST(TestOfStdTypeTraits, CompileTimeCheckForNothrowMoveAssignable) {
+TEST(TestOfStdTypeTraits, CompilerCheckForNothrowMoveAssignable) {
    static_assert(std2::is_nothrow_move_assignable_v<NothrowMoveAssignable>,
       "NothrowMoveAssignable has no throwing move assignment operator");
    static_assert(std2::is_nothrow_move_assignable_v<ThrowMoveAssignable> == false,
