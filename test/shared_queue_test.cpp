@@ -83,18 +83,18 @@ TEST(TestOfSharedQueue, WaitAndPopWaitsForValue) {
 
    constexpr int produced_value{12};
 
-   std::thread producer{[&](shared_queue<int> &storage) {
+   std::thread producer{[&]() {
       using namespace std::chrono_literals;
 
       std::this_thread::sleep_for(0.5s);
       queue.push(produced_value);
-   }, std::ref(queue)};
+   }};
 
    int consumed_value{0};
 
-   std::thread consumer{[&](shared_queue<int> &storage) {
-     storage.wait_and_pop(consumed_value);
-   }, std::ref(queue)};
+   std::thread consumer{[&]() {
+     queue.wait_and_pop(consumed_value);
+   }};
   
    producer.join();
    consumer.join();
