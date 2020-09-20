@@ -5,12 +5,10 @@
  * ============================================================================
  *
  * Example of a normal std::queue protected by a mutex for operations,
- * making it safe for thread communication, using std::mutex from C++0x with
- * the help from the std::thread library from JustSoftwareSolutions
- * ref: http://www.stdthread.co.uk/doc/headers/mutex.html
+ * making it safe for thread communication, using std::mutex from C++11.
  *
- * This exampel  was totally inspired by Anthony Williams lock-based data structures in
- * Ref: "C++ Concurrency In Action" http://www.manning.com/williams */
+ * This example was totally inspired by Anthony Williams lock-based data structures in
+ * Ref: "C++ Concurrency In Action" https://www.manning.com/books/c-plus-plus-concurrency-in-action */
 
 #pragma once
 
@@ -19,8 +17,9 @@
 #include <exception>
 #include <condition_variable>
 
-/** Multiple producer, multiple consumer thread safe queue
- * Since 'return by reference' is used this queue won't throw */
+/**
+ * Multiple producer, multiple consumer thread safe queue.  Since 'return by
+ * reference' is used this queue won't throw. */
 template<typename T>
 class shared_queue {
    std::queue<T> queue_;
