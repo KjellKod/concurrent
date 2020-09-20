@@ -271,7 +271,7 @@ TEST(TestOfConcurrent, Verify100FireCallsAreAsynchronous) {
    std::vector<int> values;
    std::vector<int> expected;
    int stoppedAt = 0;
-   int sizeWhenStopped = 0;
+   size_t sizeWhenStopped = 0;
    {
       // RAII enforced
       ConcurrentAddInt addInt(values);
