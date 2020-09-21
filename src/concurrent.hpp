@@ -45,7 +45,6 @@
 #include <stdexcept>
 #include "moveoncopy.hpp"
 #include "shared_queue.hpp"
-#include "std2_make_unique.hpp" // until available in C++14
 
 namespace concurrent_helper {
    typedef std::function<void() > Callback;
@@ -102,7 +101,7 @@ template <class T> class concurrent {
     */
    template<typename ... Args>
    concurrent(Args&& ... args)
-      : concurrent(std2::make_unique<T>(std::forward<Args>(args)...)) {
+      : concurrent(std::make_unique<T>(std::forward<Args>(args)...)) {
    }
 
    /**
@@ -233,7 +232,6 @@ template <class T> class concurrent {
       //       auto bgCall = [&, args...]{ return (_worker.*func)(args...); };
       auto bgCall = std::bind(func, _worker.get(), std::forward<Args>(args)...);
       _q.push(bgCall);
-      return;
    }
 
    /// return snapshot of size

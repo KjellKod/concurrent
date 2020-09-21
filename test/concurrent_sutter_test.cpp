@@ -1,3 +1,5 @@
+#include "concurrent.hpp"
+
 #include <gtest/gtest.h>
 #include <string>
 #include <atomic>
@@ -6,10 +8,7 @@
 #include <thread>
 #include <future>
 
-
-#include "concurrent.hpp"
 #include "test_helper.hpp"
-#include "std2_make_unique.hpp"
 
 using namespace test_helper;
 
@@ -78,7 +77,7 @@ TEST(TestOfConcurrent, README_Example) {
 
 
 TEST(TestOfSutterConcurrent, Hello_World) {
-   concurrent<std::string> cs{std2::make_unique<std::string>("Hello World")};
+   concurrent<std::string> cs{std::make_unique<std::string>("Hello World")};
    EXPECT_FALSE(cs.empty());
    EXPECT_EQ("Hello World", cs.lambda([](std::string & str) {
                                          return str.substr(0, std::string::npos); 
@@ -170,8 +169,7 @@ TEST(TestOfSutterConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
 }
 
 TEST(TestOfSutterConcurrent, unique_ptr_wrapps_concurrent) {
-   std::unique_ptr<concurrent<Greeting>> gossip;
-   gossip.reset(new concurrent<Greeting>());
+   auto gossip = std::make_unique<concurrent<Greeting>>();
    auto tjena = gossip->call(&Greeting::sayHello);
    EXPECT_EQ(tjena.get(), "Hello World");
 }
@@ -189,7 +187,7 @@ TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicIns
    std::atomic<size_t> count_of_flip{0};
    std::atomic<size_t> total_thread_access{0};
    concurrent<FlipOnce> flipOnceObject{&count_of_flip, &total_thread_access};
-   ASSERT_EQ(0, count_of_flip);
+   ASSERT_EQ(0U, count_of_flip);
 
    for (size_t howmanyflips = 0; howmanyflips < 100; ++howmanyflips) {
       std::cout << "." << std::flush;
@@ -201,8 +199,8 @@ TEST(TestOfSutterConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicIns
       res.get(); // future of future
    }
 
-   EXPECT_EQ(1, count_of_flip);
-   EXPECT_EQ(100, total_thread_access);
+   EXPECT_EQ(1U, count_of_flip);
+   EXPECT_EQ(100U, total_thread_access);
 
    std::cout << std::endl;
 }

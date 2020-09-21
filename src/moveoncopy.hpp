@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "std2_type_traits.hpp"
+
 // From g3log: https://bitbucket.org/KjellKod/g3log
 // A straightforward technique to move around packaged_tasks or anything else that is not copyable
 //  Instances of std::packaged_task are MoveConstructible and MoveAssignable, but
@@ -15,16 +17,19 @@ template<typename Moveable>
 struct MoveOnCopy {
    mutable Moveable _move_only;
 
-   explicit MoveOnCopy(Moveable&& m) : _move_only(std::move(m)) { }
-   MoveOnCopy(MoveOnCopy const& t) : _move_only(std::move(t._move_only)) { }
-   MoveOnCopy(MoveOnCopy&& t) : _move_only(std::move(t._move_only)) { }
+   static constexpr bool is_nothrow_move_constructible{std2::is_nothrow_move_constructible_v<Moveable>};
+   static constexpr bool is_nothrow_move_assignable{std2::is_nothrow_move_assignable_v<Moveable>};
 
-   MoveOnCopy& operator=(MoveOnCopy const& other) {
+   explicit MoveOnCopy(Moveable&& m) noexcept(is_nothrow_move_constructible) : _move_only(std::move(m)) { }
+   MoveOnCopy(MoveOnCopy const& t) noexcept(is_nothrow_move_constructible) : _move_only(std::move(t._move_only)) { }
+   MoveOnCopy(MoveOnCopy&& t) noexcept(is_nothrow_move_constructible) : _move_only(std::move(t._move_only)) { }
+
+   MoveOnCopy& operator=(MoveOnCopy const& other) noexcept(is_nothrow_move_assignable) {
       _move_only = std::move(other._move_only);
       return *this;
    }
 
-   MoveOnCopy& operator=(MoveOnCopy&& other) {
+   MoveOnCopy& operator=(MoveOnCopy&& other) noexcept(is_nothrow_move_assignable) {
       _move_only = std::move(other._move_only);
       return *this;
    }

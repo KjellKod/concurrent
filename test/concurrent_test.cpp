@@ -1,3 +1,5 @@
+#include "concurrent.hpp"
+
 #include <gtest/gtest.h>
 #include <string>
 #include <atomic>
@@ -7,11 +9,8 @@
 #include <random>
 #include <thread>
 #include <future>
-#include <cassert>
-#include <iostream>
-#include "concurrent.hpp"
-#include "moveoncopy.hpp"
 
+#include "moveoncopy.hpp"
 #include "test_helper.hpp"
 using namespace test_helper;
 
@@ -81,7 +80,7 @@ TEST(TestOfConcurrent, Is_Not_Empty) {
 }
 
 TEST(TestOfConcurrent, Hello_World) {
-   concurrent<Greeting> cs{std2::make_unique<Greeting>()};
+   concurrent<Greeting> cs{std::make_unique<Greeting>()};
    EXPECT_FALSE(cs.empty());
    EXPECT_EQ("Hello World", cs.call(&Greeting::sayHello).get());
 }
@@ -174,7 +173,7 @@ namespace {
 
 
    void WorkUntilFutureIsReady(const UniqueFutureResult& result) {
-      while (false == concurrent_helper::future_is_ready(result.get())) {
+      while (!concurrent_helper::future_is_ready(result.get())) {
          using namespace std::chrono_literals;
          std::this_thread::sleep_for(1ms);
       }
@@ -183,7 +182,7 @@ namespace {
 
 
 
-// Mimick a thread loop that continously goes to the `concurrent` object to check
+// Mimick a thread loop that continuously goes to the `concurrent` object to check
 // if the work is ready for processing.
 TEST(TestOfConcurrent, DoWorkWhenReady) {
    concurrent<HelloWorld> w;
@@ -205,9 +204,9 @@ TEST(TestOfConcurrent, DoWorkWhenReady) {
          expected += std::to_string(loopCount - 1);
          EXPECT_EQ(expected, reply);
       }
-      result.reset(new FutureResult(w.lambda([&text](HelloWorld & world) {
+      result = std::make_unique<FutureResult>(w.lambda([&text](HelloWorld & world) {
          return world.Hello(text);
-      })));
+      }));
       ++loopCount;
    }
    ASSERT_TRUE(result != nullptr);
@@ -219,7 +218,7 @@ TEST(TestOfConcurrent, DoWorkWhenReady) {
    auto reply = result->get();
    EXPECT_EQ(expected, reply);
    allResult.push_back(reply);
-   EXPECT_EQ(10, allResult.size());
+   EXPECT_EQ(10U, allResult.size());
 }
 
 
@@ -232,7 +231,7 @@ TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicInside_Wa
    std::atomic<size_t> count_of_flip{0};
    std::atomic<size_t> total_thread_access{0};
    concurrent<FlipOnce> flipOnceObject{&count_of_flip, &total_thread_access};
-   ASSERT_EQ(0, count_of_flip);
+   ASSERT_EQ(0U, count_of_flip);
 
    for (size_t howmanyflips = 0; howmanyflips < 100; ++howmanyflips) {
       std::cout << "." << std::flush;
@@ -244,15 +243,15 @@ TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicInside_Wa
       res.get(); // future of future
    }
 
-   EXPECT_EQ(1, count_of_flip);
-   EXPECT_EQ(100, total_thread_access);
+   EXPECT_EQ(1U, count_of_flip);
+   EXPECT_EQ(100U, total_thread_access);
    std::cout << std::endl;
 
 }
 
 struct AddInt {
    std::vector<int>& collectedValues;
-   AddInt(std::vector<int>& values) : collectedValues(values) {}
+   explicit AddInt(std::vector<int>& values) : collectedValues(values) {}
    void Add(int value) {
       collectedValues.push_back(value);
    }
@@ -260,7 +259,7 @@ struct AddInt {
 
 
 struct ConcurrentAddInt : public concurrent<AddInt> {
-   ConcurrentAddInt(std::vector<int>& values) : concurrent<AddInt>(values) {}
+   explicit ConcurrentAddInt(std::vector<int>& values) : concurrent<AddInt>(values) {}
    virtual ~ConcurrentAddInt() = default;
 
    size_t size() override {
@@ -272,7 +271,7 @@ TEST(TestOfConcurrent, Verify100FireCallsAreAsynchronous) {
    std::vector<int> values;
    std::vector<int> expected;
    int stoppedAt = 0;
-   int sizeWhenStopped = 0;
+   size_t sizeWhenStopped = 0;
    {
       // RAII enforced
       ConcurrentAddInt addInt(values);
