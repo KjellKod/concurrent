@@ -9,8 +9,7 @@
  *
  * ********************************************* */
 
-#ifndef STD2_TYPE_TRAITS_HPP_
-#define STD2_TYPE_TRAITS_HPP_
+#pragma once
 
 #include <type_traits>
 
@@ -31,4 +30,3 @@ namespace std2 {
 #endif
 }  // namespace std2
 
-#endif
